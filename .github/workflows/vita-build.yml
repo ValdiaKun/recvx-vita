@@ -23,11 +23,17 @@ jobs:
     container:
       image: vitasdk/vitasdk:2026.08
     steps:
-      - name: Checkout source and required submodules
+      - name: Checkout source
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: false
           fetch-depth: 0
+
+      - name: Initialize only required decompilation headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          git submodule update --init include/recvx-decomp-cri include/recvx-decomp-katana
 
       - name: Verify SDK
         shell: bash
