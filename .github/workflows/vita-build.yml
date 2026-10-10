@@ -29,6 +29,12 @@ jobs:
           submodules: false
           fetch-depth: 0
 
+      - name: Mark mounted workspace as safe for container root
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       - name: Initialize only required decompilation headers
         shell: bash
         run: |
