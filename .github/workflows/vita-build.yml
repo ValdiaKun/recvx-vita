@@ -1,0 +1,103 @@
+name: VitaSDK VPK Build
+
+on:
+  push:
+    branches:
+      - master
+      - "ci/**"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: recvx-vita-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-vpk:
+    name: Cross-compile and package recvx.vpk
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    container:
+      image: vitasdk/vitasdk:2026.08
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 0
+
+      - name: Mark mounted workspace as safe for container root
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Initialize only required decompilation headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          git submodule update --init include/recvx-decomp-cri include/recvx-decomp-katana
+
+      - name: Verify SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${VITASDK:?VitaSDK container did not set VITASDK}"
+          test -x "$VITASDK/bin/arm-vita-eabi-gcc"
+          test -f "$VITASDK/share/vita.toolchain.cmake"
+          arm-vita-eabi-gcc --version
+          cmake --version
+          git submodule status
+
+      - name: Install project libraries
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v vdpm
+          # Use the package identifiers shipped in the 2026.08 channel.
+          vdpm install vitaGL vitaShaRK SceShaccCgExt libmathneon taihen
+
+      - name: Configure Vita build
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S . -B build-vita \
+            -DCMAKE_TOOLCHAIN_FILE="$VITASDK/share/vita.toolchain.cmake" \
+            -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build VPK
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake --build build-vita --parallel 2
+
+      - name: Verify package output
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s build-vita/recvx.vpk
+          file build-vita/recvx.vpk
+          sha256sum build-vita/recvx.vpk
+
+      - name: Upload VPK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: recvx-vita-vpk
+          path: build-vita/recvx.vpk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recvx-vita-build-diagnostics
+          path: |
+            build-vita/CMakeCache.txt
+            build-vita/CMakeFiles/CMakeConfigureLog.yaml
+            build-vita/**/*.log
+          if-no-files-found: ignore
+          retention-days: 14
