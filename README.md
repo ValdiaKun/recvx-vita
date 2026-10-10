@@ -24,7 +24,7 @@ The port is early work: it boots through the title screen into gameplay, but FMV
 
 ### Building the VPK
 
-Requirements: [VitaSDK](https://vitasdk.org) with the vdpm packages `vitaGL`, `vitashark`, `SceShaccCgExt`, `mathneon` and `taihen`, and CMake 3.16 or newer. The PS2 SDK and the MWCC compiler are not needed.
+Requirements: [VitaSDK](https://vitasdk.org) with the vdpm packages `vitaGL`, `vitaShaRK`, `SceShaccCgExt`, `libmathneon` and `taihen`, and CMake 3.16 or newer. The PS2 SDK and the MWCC compiler are not needed.
 
 ```sh
 git clone https://github.com/shoui520/recvx-vita
