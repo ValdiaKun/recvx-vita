@@ -57,7 +57,8 @@ jobs:
         run: |
           set -euo pipefail
           command -v vdpm
-          vdpm install vitaGL vitashark SceShaccCgExt mathneon taihen
+          # Use the package identifiers shipped in the 2026.08 channel.
+          vdpm install vitaGL vitaShaRK SceShaccCgExt libmathneon taihen
 
       - name: Configure Vita build
         shell: bash
